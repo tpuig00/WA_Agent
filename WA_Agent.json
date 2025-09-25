@@ -1,0 +1,2453 @@
+{
+  "name": "CHATBOT",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        1824,
+        2208
+      ],
+      "id": "4167f152-162b-4e98-a929-d1d785bc8a28",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "content": "## Brain/Tools",
+        "height": 420,
+        "width": 540,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        1952
+      ],
+      "id": "e661f80d-fbd7-4620-bdd1-cbaf069c4337",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "# Expert Agent\n",
+        "height": 700,
+        "width": 760
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        2384
+      ],
+      "id": "e1eee7b3-d92e-4135-8949-96808f23bf5f",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "# Customer Agent",
+        "height": 700,
+        "width": 760,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2224,
+        2384
+      ],
+      "id": "f715e90b-9cd0-4e81-9f31-faf27260b90c",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "content": "# Order Agent\n\n\n",
+        "height": 700,
+        "width": 660,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3008,
+        2384
+      ],
+      "id": "a4907f58-190a-4eef-a0b9-5e613eaaafc4",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "iju_usermeta",
+          "mode": "list",
+          "cachedResultName": "iju_usermeta"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "meta_value",
+              "condition": "LIKE",
+              "value": "={{ $json.cleanedPhone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        2144,
+        2080
+      ],
+      "id": "6503f2f9-ff5b-44d1-ba29-c3e5a2bd8ce8",
+      "name": "Select rows from a table",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "Nbf80y5pwngWA2tV",
+          "name": "MySQL-WooCommerce-AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "195bd546-7779-4b1f-8aff-7d545440fcdd",
+              "leftValue": "={{ $json.context.customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2480,
+        2080
+      ],
+      "id": "8898e245-1c77-42be-9688-799adbd7a06f",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "resource": "customer",
+        "operation": "get",
+        "customerId": "={{ $json.context.customer_id }}"
+      },
+      "type": "n8n-nodes-base.wooCommerce",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        2032
+      ],
+      "id": "27a3c7f5-80f2-4955-bc69-a12ac8504bdb",
+      "name": "Get a customer",
+      "alwaysOutputData": false,
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "tovkTyfYYyOPZUyy",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let customer_context_prompt =''; // Old -> este es un no identificado\nlet customer_id = '';\n\nif ($input.first().json.id) {\n  const data = $input.first().json;\n\n  customer_id = \"\" + $input.first().json.id;\n  customer_context_prompt += \"## Customer information \\n\";\n\n  if (data.first_name) customer_context_prompt += `First name: ${data.first_name}\\n`;\n  if (data.last_name) customer_context_prompt += `Last name: ${data.last_name}\\n`;\n  if (data.email) customer_context_prompt += `Email: ${data.email}\\n`;\n\n  if (data.billing) {\n    if (data.billing.address_1) customer_context_prompt += `Billing address: ${data.billing.address_1}\\n`;\n    if (data.billing.city) customer_context_prompt += `Billing city: ${data.billing.city}\\n`;\n    if (data.billing.postcode) customer_context_prompt += `Billing postcode: ${data.billing.postcode}\\n`;\n    if (data.billing.country) customer_context_prompt += `Billing country: ${data.billing.country}\\n`;\n    if (data.billing.phone) customer_context_prompt += `Billing phone: ${data.billing.phone}\\n`;\n  }\n}\n\nreturn [{\n  json: {\n    customer_context_prompt,\n    customer_id,\n    startedAt: Date.now()\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        2160
+      ],
+      "id": "b758246d-e339-4875-b1b1-ee443d26b3c3",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "content": "# Identify Customer\n\n",
+        "height": 420,
+        "width": 1140,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2000,
+        1952
+      ],
+      "typeVersion": 1,
+      "id": "da1a62f7-e858-46d2-8697-6ae5c1ef1019",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"state\": {\n      \"type\": \"string\",\n      \"enum\": [\"success\", \"escalated\", \"error\"],\n      \"description\": \"El estado de la respuesta: éxito, escalado a humano o error.\"\n    },\n    \"message\": {\n      \"type\": \"string\",\n      \"description\": \"Mensaje de respuesta natural para WhatsApp.\"\n    }\n  },\n  \"required\": [\"state\", \"message\"],\n  \"additionalProperties\": false\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        2224
+      ],
+      "id": "866bb2a2-e8eb-4594-9eee-c58684efe9aa",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "let customer_context_prompt = 'Este es un cliente NO identificado en la base de datos, por lo que no tenemos customer_id y sus herramientas seran mas limitadas';\nlet customer_id = '';\n\nif ($input.first().json.user_id) {\n  customer_context_prompt = \"Usa el customer_id: '\" + $input.first().json.user_id + \"' para todas las herramientas que lo necesiten.\";\n  customer_id = \"\"+$input.first().json.user_id;\n}\n\nreturn [\n  {\n    context: {\n      customer_context_prompt,\n      customer_id,\n      startedAt: Date.now()\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        2080
+      ],
+      "id": "d01b3db0-37e7-48d5-a7c2-d4d1ff5ebd59",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "content": "# Respond & Log\n\n\n",
+        "height": 640,
+        "width": 1252,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3680,
+        1952
+      ],
+      "typeVersion": 1,
+      "id": "7f92b147-8344-4718-b01b-82ab23dbcb4a",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const phoneRaw = $('WhatsApp Trigger').first().json.contacts[0].wa_id;\n\nconst phone = phoneRaw.replace(/\\D/g, '');\n\nconst countryCodes2 = [\"34\"]; \nconst countryCodes3 = [\n  \"351\", // Portugal\n  \"352\", // Luxemburgo\n  \"353\", // Irlanda\n  \"354\", // Islandia\n  \"355\", // Albania\n  \"356\", // Malta\n  \"357\", // Chipre\n  \"358\", // Finlandia\n  \"359\", // Bulgaria\n  \"370\", // Lituania\n  \"371\", // Letonia\n  \"372\", // Estonia\n  \"373\", // Moldavia\n  \"374\", // Armenia\n  \"375\", // Bielorrusia\n  \"376\", // Andorra\n  \"377\", // Mónaco\n  \"378\", // San Marino\n  \"380\", // Ucrania\n  \"381\", // Serbia\n  \"382\", // Montenegro\n  \"383\", // Kosovo\n  \"385\", // Croacia\n  \"386\", // Eslovenia\n  \"387\", // Bosnia y Herzegovina\n  \"389\", // Macedonia del Norte\n  \"390\", // Italia (ocasional prefijo fijo)\n  \"39\"   // Italia (móvil)\n];\n\nlet cleanedPhone = phone;\n\nif (countryCodes2.some(code => phone.startsWith(code))) {\n  cleanedPhone = phone.slice(2);\n} else if (countryCodes3.some(code => phone.startsWith(code))) {\n  cleanedPhone = phone.slice(3);\n}\n\nreturn [{ json: { cleanedPhone } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        1712
+      ],
+      "id": "b8f104af-e612-43b6-bc5c-a355d241513e",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "tableName": "message_history"
+      },
+      "id": "03f7ba0b-f96f-4a6a-ac42-25d02d2dc10d",
+      "name": "History Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "position": [
+        832,
+        2544
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "postgres": {
+          "id": "k0qoM4K5nyfOe7Rz",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "inputType": "base64",
+        "options": {
+          "detail": "auto"
+        }
+      },
+      "id": "f203eb91-74ea-4948-b5a7-21c39543347f",
+      "name": "OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        1312,
+        1520
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": "kDHm6sag86Ql9lSN",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "48af2dcc-4ce9-45fc-abfc-54f803930092",
+              "name": "text",
+              "type": "string",
+              "value": "=User image description: {{ $json.content }}\n\nUser image caption: {{ $('Route Types').item.json.messages[0].image.caption }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c85d9f10-4e05-4269-907b-c865c019958c",
+      "name": "Map image prompt",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1488,
+        1520
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "38aec976-a32c-4b0e-85f4-c90adc16abc9",
+              "name": "text",
+              "type": "string",
+              "value": "={{ $json.messages[0].text.body }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e7e6dfea-bf71-4b44-9d03-a4c74f72e97f",
+      "name": "Map text prompt",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        928,
+        1120
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "mediaUrlGet",
+        "mediaGetId": "={{ $json.messages[0].audio.id}}"
+      },
+      "id": "faad8f8f-c7d1-4b41-a24a-1a68d188b43d",
+      "name": "Gets WhatsApp Voicemail Source URL",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        928,
+        1312
+      ],
+      "webhookId": "bbe62f3d-8788-49d4-aae6-9e9411446d44",
+      "typeVersion": 1,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "8GVktgxsibsrXh5e",
+          "name": "WhatsApp PROD"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "mediaUrlGet",
+        "mediaGetId": "={{ $json.messages[0].image.id }}"
+      },
+      "id": "65bb3ad3-d6a3-420a-8d79-1766496e406d",
+      "name": "Gets WhatsApp Image Source URL",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        928,
+        1520
+      ],
+      "webhookId": "c2982df4-1d8d-4669-a724-44ae17d11e6c",
+      "typeVersion": 1,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "8GVktgxsibsrXh5e",
+          "name": "WhatsApp PROD"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "id": "731dd49a-894e-40bd-aa9a-b321ef015c04",
+      "name": "Download Voicemail",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1232,
+        1312
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5OpIjX865RVA6aVB",
+          "name": "WhatsApp Media DL"
+        },
+        "httpBearerAuth": {
+          "id": "n9UghajNG13HjbhQ",
+          "name": "Bearer WP prod"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "id": "c5e158be-9b11-48bf-aee2-dde0bbc887de",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1120,
+        1520
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5OpIjX865RVA6aVB",
+          "name": "WhatsApp Media DL"
+        },
+        "httpBearerAuth": {
+          "id": "n9UghajNG13HjbhQ",
+          "name": "Bearer WP prod"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "2fc5c912-629b-4cbe-b5e3-7e3f0651c628",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.messages[0].type }}",
+                    "rightValue": "text"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "26a3d85c-0815-48ff-85ce-713129a1107c",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.messages[0].type }}",
+                    "rightValue": "audio"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "840b95b8-6559-4fb7-b32c-651451d6d0d2",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.messages[0].type }}",
+                    "rightValue": "image"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Image"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "3e7a07f9-b785-450c-8c68-f6b276838503",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.messages[0].type }}",
+                    "rightValue": "document"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Document"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "652b2662-4133-4456-9b6a-873653c88dc6",
+      "name": "Route Types",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        560,
+        1408
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "2132e734-0a13-4371-a205-9cb30e0ae8d2",
+      "name": "Transcribe a recording",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        1488,
+        1312
+      ],
+      "typeVersion": 1.8,
+      "credentials": {
+        "openAiApi": {
+          "id": "kDHm6sag86Ql9lSN",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1824,
+        1424
+      ],
+      "id": "1a16d73c-70ee-4e0b-9c3b-0de3595d7792",
+      "name": "Merge text",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "2d196d01-8ecb-43f2-b4b9-cf802d4c66f8",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "position": [
+        320,
+        1424
+      ],
+      "webhookId": "ab09ca3e-53b2-4079-9ddc-bccb2f69551b",
+      "typeVersion": 1,
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "YwUiAMSusEjpFELj",
+          "name": "WhatsApp OAuth GOOD"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Recibe Input\n\n\n",
+        "height": 840,
+        "width": 1480,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        512,
+        1088
+      ],
+      "typeVersion": 1,
+      "id": "a5729860-98b6-4188-8c5d-3224abeebf8f",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2288,
+        1632
+      ],
+      "id": "54b54d6f-3293-4290-beb0-482339cbc02d",
+      "name": "Wait10sec",
+      "webhookId": "e272ab87-8107-4221-9ea3-645c61499a4c"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "whatsapp_buffer",
+          "mode": "list",
+          "cachedResultName": "whatsapp_buffer"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+            "message": "={{ $json.text }}",
+            "created_at": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2080,
+        1632
+      ],
+      "id": "3804318d-f96a-47bc-b998-811ae7d3c8da",
+      "name": "Insert message",
+      "credentials": {
+        "postgres": {
+          "id": "kavjqfQQVsgGjgy0",
+          "name": "GCP-DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "18445dcf-1967-40d1-aec2-6d2196b1364b",
+              "leftValue": "={{ $items()[$items().length - 1].json.message }}",
+              "rightValue": "={{ $('Merge text').item.json.text }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2640,
+        1632
+      ],
+      "id": "80630e4f-3977-458e-b1ba-c95e6b82bdbb",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "whatsapp_buffer",
+          "mode": "list",
+          "cachedResultName": "whatsapp_buffer"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "chat_id",
+              "value": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3120,
+        1632
+      ],
+      "id": "6b7611e0-ee2e-482c-b512-e34495d245a9",
+      "name": "Delete table or rows",
+      "credentials": {
+        "postgres": {
+          "id": "kavjqfQQVsgGjgy0",
+          "name": "GCP-DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "whatsapp_buffer",
+          "mode": "list",
+          "cachedResultName": "whatsapp_buffer"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "chat_id",
+              "value": "={{ $('Insert message').item.json.chat_id }}"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "created_at"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2464,
+        1632
+      ],
+      "id": "885d03f9-41c5-423c-8dfe-b15c21948ff8",
+      "name": "All messages",
+      "credentials": {
+        "postgres": {
+          "id": "kavjqfQQVsgGjgy0",
+          "name": "GCP-DB"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        1728
+      ],
+      "id": "f58c8fa1-1eab-45ff-acab-403bc92608c2",
+      "name": "No Operation, do nothing3"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "message",
+              "separateBy": "\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        2880,
+        1568
+      ],
+      "id": "74c0061f-8b17-48d8-a330-28c776a3366d",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "content": "# Message Queue\n\n",
+        "height": 440,
+        "width": 1660,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2000,
+        1488
+      ],
+      "typeVersion": 1,
+      "id": "a56f5c06-d91b-4290-9d9d-0bc8a57efb1d",
+      "name": "Sticky Note15"
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "707018959166122",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "template": "=not_supported_type|es"
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        928,
+        1744
+      ],
+      "id": "aa66c0f0-6380-49f9-88fc-89bf5d02c577",
+      "name": "Not Supported",
+      "webhookId": "f9ca55d5-b127-4259-80bf-4ef5086e4895",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "8GVktgxsibsrXh5e",
+          "name": "WhatsApp PROD"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        1120
+      ],
+      "id": "4745058d-8129-4ce7-9de8-701fce471288",
+      "name": "No Operation, do nothing4"
+    },
+    {
+      "parameters": {
+        "content": "# Parent Agent\n\n\n",
+        "height": 420,
+        "width": 500,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3168,
+        1952
+      ],
+      "typeVersion": 1,
+      "id": "7a14c71d-e4dd-4d28-8132-70872d5a989d",
+      "name": "Sticky Note16"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Summarize').item.json.concatenated_message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# Overview\nYou are Artie, the virtual customer‑service orchestrator for Artesano Factory (vegetable‑tanned leather, tools and dyes ecommerce). You decide which specialist sub‑agent to call and transform their replies into a single response for whatsapp chat.\n\n## Tools\n- *Think* – reflect deeply or break down the problem if you get stuck.  \n- *expertAgent* – Answer questions about products, blog, policies, FAQs and general site content.\n- *customerAgent* – perform customer‑account actions (change address, name, email).  \n- *orderAgent* – handle order information (order status, history, purchased items).\n\n\nWORKFLOW\n\nClassify intent\n• INFORMATION – user asks for facts present on the site (stock, price, product use, policy, etc.).\n• ACTION – user wants to do something (account data, order, return, cancel, etc.).\n• OTHER / AMBIGUOUS – not clear, or human assistance requested.\n\nINFORMATION path\na. Call expertAgent with the user input.\nb. If expertAgent returns an answer with confidence, forward it message and state=\"success\".\nc. If expertAgent returns “not found/unknown” after one call, send the returned message  + human agent option\nand set state=\"success\".\n*Escalate (state=\"escalated\") immediately* if the user asks for speaking with an agent, confirm ,expresses dissatisfaction.\n\nACTION path\na. Call customerAgent or orderAgent as appropriate.\nb. If the agent confirms completion, reply with state=\"success\" and success message.\nc. If the agent indicates the action is impossible with current capabilities, or returns an error, set state=\"escalated\" and notify the user a human will assist.\n\nOTHER / AMBIGUOUS path\na. Ask one clarifying question. If still unclear, set state=\"escalated\".\n\nRULES & GUARANTEES\n• Keep replies concise, friendly, and on‑brand, as a good human assistant would..\n• Never overrule or contradict a sub‑agent’s answer.\n• Never invent product availability or policy details.\n• Mirror the user’s language.\n• Escalate (state=\"escalated\") immediately* if user seems confused, not understood, unresolved confusion or dissatisfaction.\n• Limit to one tool call per sub‑agent type per request, unless the agent response explicitly asks for additional info.\n• Stop after a maximum of 3 total tool calls.\n\nOUTPUT SCHEMA  (MANDATORY)\nReply with ONE line of JSON only:\n{\n\"state\": \"<success | escalated | error>\",\n\"message\": \"<natural‑language whatsapp reply>\"\n}\n\n\nEXAMPLES\n\nINFORMATION\nUser: “¿Tenéis cuero para hacer pelotas valencianas?”\n→ expertAgent: \"Sí, tenemos cuero vacuno flor…\"\n→ JSON:\n{\"state\": \"success\", \"message\": \"Sí, tenemos cuero vacuno flor…\"}\n\nINFORMATION NOT FOUND + SUGGESTED\nUser: “¿Vendéis hilos de oro?”\n→ expertAgent: \"No he podid encontrar hilo....\".\n→ JSON:\n{\"state\": \"success\", \"message\": \"No he podido encontrar hilos de oro en nuestro sitio...  Sin embargo, ofrecemos una variedad de productos que podrían ser útiles par... ¿Quieres que te ponga en contacto con un agente humano?\"}\n\nACTION UNSUPPORTED\nUser: “Quiero dividir mi pedido en dos envíos.”\n→ orderAgent: \"No he podido hacer esta accion\"\n→ JSON:\n{\"state\": \"escalated\", \"message\": \"Lo siento, esa operación requiere la intervención de un agente humano. Te pongo en contacto…\"}\n",
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        3280,
+        2112
+      ],
+      "id": "3999a935-6f44-44bf-ad2c-da580216cdc6",
+      "name": "Orchestrator",
+      "alwaysOutputData": true,
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.state }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e3948cf3-639a-4421-abfb-de1f1e2b1f19"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "success"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.state }}",
+                    "rightValue": "escalated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4ebbdc19-3f1f-4c1b-96e3-9022703aedce"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "escalated"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.state }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d01addf4-59d0-4a1e-9743-4ea3b6c4edf1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3744,
+        2144
+      ],
+      "id": "26c58958-aa8b-4885-ae38-6b279331bf6b",
+      "name": "Switch3"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "wa_agent_logs",
+          "mode": "list",
+          "cachedResultName": "wa_agent_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tool_used": "=null",
+            "execution_id": "={{ $execution.id }}",
+            "conversation_id": "={{ $('WhatsApp Trigger').item.json.messages[0].id }}",
+            "user_id": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+            "message_text": "={{ $json.message_text }}",
+            "state": "={{ $json.state }}",
+            "latency_ms": "={{ $json.latency_ms }}",
+            "timestamp": "={{ $now }}",
+            "response": "={{ $json.response }}",
+            "name": "={{ $('WhatsApp Trigger').item.json.contacts[0].profile.name }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_text",
+              "displayName": "message_text",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tool_used",
+              "displayName": "tool_used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "options",
+              "canBeUsedToMatch": true,
+              "options": [
+                {
+                  "name": "error",
+                  "value": "error"
+                },
+                {
+                  "name": "escalated",
+                  "value": "escalated"
+                },
+                {
+                  "name": "success",
+                  "value": "success"
+                }
+              ]
+            },
+            {
+              "id": "latency_ms",
+              "displayName": "latency_ms",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "response",
+              "displayName": "response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        4400,
+        2208
+      ],
+      "id": "828bfad2-897a-465d-8cee-c144a09b5d42",
+      "name": "insert log3",
+      "credentials": {
+        "postgres": {
+          "id": "kavjqfQQVsgGjgy0",
+          "name": "GCP-DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let state_value = \"\";\nstate_value = $items(\"Orchestrator\")[0].json.output.state;\n\nconst response =$items(\"Orchestrator\")[0].json.output.message;\n\nconst latency_ms = Date.now() - $('Code1').first().json.startedAt;\nconst conversation_id = $('WhatsApp Trigger').first().json.messages[0].id;\nconst user_id = $('WhatsApp Trigger').first().json.contacts[0].wa_id;\nconst message_text = $('Summarize').first().json.concatenated_message\nreturn [{\n  json: {\n    tool_used: \"\",\n    execution_id: $execution.id,\n    conversation_id,\n    user_id,\n    message_text: message_text,\n    state: state_value,\n    response: response,\n    latency_ms,\n    error_msg: '',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4224,
+        2208
+      ],
+      "id": "7b1ac5b7-b583-400f-99cb-d814fe6df68b",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "707018959166122",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "textBody": "={{ $json.output.message }}",
+        "additionalFields": {
+          "previewUrl": false
+        }
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        3968,
+        2048
+      ],
+      "id": "69c28577-8dff-4851-86b9-0062072a4467",
+      "name": "Respond",
+      "webhookId": "576a4548-b416-42aa-9472-60405fbd45c3",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "8GVktgxsibsrXh5e",
+          "name": "WhatsApp PROD"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "707018959166122",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "template": "=escalated_human|es"
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        3968,
+        2208
+      ],
+      "id": "827551ac-d3dc-4292-9f73-7bac37fbc128",
+      "name": "Escalated to human",
+      "webhookId": "f9ca55d5-b127-4259-80bf-4ef5086e4895",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "8GVktgxsibsrXh5e",
+          "name": "WhatsApp PROD"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "707018959166122",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "template": "generic_error|es"
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        3968,
+        2368
+      ],
+      "id": "4a8768cf-c3e6-4ba5-9b76-9cf89d4a76dd",
+      "name": "Generic Error",
+      "webhookId": "f9ca55d5-b127-4259-80bf-4ef5086e4895",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "8GVktgxsibsrXh5e",
+          "name": "WhatsApp PROD"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini-2025-04-14",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini-2025-04-14"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1712,
+        2064
+      ],
+      "id": "24f1eaec-328a-471f-8714-34cf4cbf81dc",
+      "name": "GPT 5-mini",
+      "credentials": {
+        "openAiApi": {
+          "id": "kDHm6sag86Ql9lSN",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryZep",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        2080
+      ],
+      "id": "7d9a0e4b-5778-4d40-b34f-1267d4978c51",
+      "name": "Zep",
+      "credentials": {
+        "zepApi": {
+          "id": "zHvJJXjQcZNX6MD8",
+          "name": "Zep Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get product details by product ID \n",
+        "url": "=https://lanch-134100137441.europe-west1.run.app/api/v1/product/{id}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "id",
+              "description": "Product ID",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "3a8e3ceb-053c-423d-af53-08f0442925a8",
+      "name": "get_product",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        2752,
+        3120
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "toolDescription": "Fetches the fully-rendered **plain text** of a single web.  \n• Input  : { \"url\": \"<absolute https://…>\" }  \n• Query  : url=<encoded url>  \n• Output : { \"text\": \"<visible text of the body>\", \"url\": \"<same url>\" }  \n• The \"text\" field already has **all HTML tags removed** .  \n• Use this tool whenever you need the actual words that appear on the page—product details, prices, stock lines, shipping terms, payment options, company policies, etc.  \n• Do **not** call it on off-site links or mailto:/tel:/javascript: pseudo-links.  \n",
+        "method": "POST",
+        "url": "https://lanch-134100137441.europe-west1.run.app/api/v1/get_page",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "url"
+            }
+          ]
+        }
+      },
+      "id": "9edc5a36-dfa0-4b63-bf09-c87378944668",
+      "name": "get_page1",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        1920,
+        2848
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "toolDescription": "Returns up to 25 URLs whose page titles are the closest semantic match to the supplied query.\nBehind the scenes it performs a vector-similarity search over a pre-built index of titles.\n\nUse this tool when you need a list of URLs on a topic, it will return the URLs that the RAG defines that match the most, otherwise it will help you to try searching with other words.\n\nExample\nUser says:\n“Buenas tardes. He visto en su página web crupon vaquetilla natural en 3,5 mm de espesor. Lo necesito para hacer unos llaveros, pero algo sumamente importante es que sea 3,5 mm en todo, y una rigidez que no sea blanda.”\n\nModel decides the parameters:\n{\n  \"query\": \"crupon vaquetilla natural 3.5 mm\"\n}\n\nThe tool replies with up to 25 URLs whose titles closely match that specification.\n",
+        "method": "POST",
+        "url": "https://lanch-134100137441.europe-west1.run.app/api/v1/search",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "query"
+            },
+            {
+              "name": "k",
+              "valueProvider": "fieldValue",
+              "value": "20"
+            }
+          ]
+        }
+      },
+      "id": "4e4ea716-7473-486d-b44c-a8843b35b138",
+      "name": "list_links1",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        1760,
+        2848
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "toolDescription": "sub-agent to answer any customer questions about the business.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "You are Artie, a Artesano Factory’s real-time website assistant for (https://artesanofactory.com/). Your goal is to answer user questions with information from the website and help them encontrar/navegar contenido, adjuntando enlaces útiles.\n\nAVAILABLE TOOLS\n• list_links(query: string) → returns up to 15 results with fields: url, woo_id (optional), score (0–1), main_text (short snippet).\n• get_page(url: string) → returns the rendered, tag-free text content of the page.\n• get_product(id: number) → returns extended product info (name, price, stock, attributes/variations, description).\n\nGENERAL BEHAVIOR\n• Responde en el idioma del usuario, tono cercano y directo.\n• Nunca inventes datos. Si no encuentras la información tras la estrategia de búsqueda, usa el Fallback (abajo).\n• No menciones nombres de herramientas ni describas los pasos internos.\n• Formato de enlaces: Texto: URL (sin markdown, sin símbolos de formato).\n\nHOW TO UNDERSTAND THE USER MESSAGE\n• Detecta si la intención es: producto, como usar X, herramienta, categoría, envío, pago, devolución/garantía, política, empresa (quiénes somos/contacto), u “otra info”.\n• Extrae “entidades” (p.ej. crupón/vaquetilla, aplicación ( bordes, repujado ), color, grosor 4mm, acabado engrasado, marca, herramienta).\n• Normaliza términos: sin acentos, singular/plural, sin mayúsculas; tolera pequeñas faltas (marron↔marrón, crupón↔crupon).\n• Si la pregunta es binaria (¿tenéis X?), tu salida debe confirmar/denegar con base en producto/página encontrada, y guiar la siguiente acción.\n\nTRANSFORM USER MESSAGE → list_links QUERY\n• Crea una frase de búsqueda muy concisa, SOLO con sustantivos y modificadores clave que aparecerían ,si la intención es descubrimiento o cómo-hacer, añade sinónimos de proceso y de herramienta/consumible:\n\n- “¿Tenéis crupón vaquetilla 4mm marrón?” → “crupon vaquetilla 4mm marron”\n- “¿Aceptáis PayPal?” → “metodos de pago paypal”\n- “¿Qué más tenéis para los bordes?” → “cantos bordes biselador bruñidor pintura de cantos goma tragacanto cera”\n- “¿Cómo pulir los cantos?” → “como pulir cantos guía blog bordes tragacanto”\n- “Para hacer cinturones que me recomiendas?” → “materiales para hacer cinturones de cuero”\n• Evita palabras vacías: hola, podrías, tenéis, dime, etc.\n\nSEARCH STRATEGY (MAX 2 list_links; MAX 8 tool calls totales)\n\n1. Ejecuta list_links(query).\n2. Evalúa críticamente los resultados:\n    - Usa url, score y también el contenido de main_text (¡léelo!) para decidir relevancia.\n3. Selecciona ≤ 3 candidatos con mejor “ajuste semántico” a la intención del usuario.\n4. Para cada candidato:\n    - Si tiene woo_id ⇒ usa get_product(woo_id) una única vez.\n    - Si no tiene woo_id ⇒ usa get_page(url) una única vez.\n5. Extrae datos necesarios de product/page (contenido, como usar X, acabado, precio; stock; políticas; métodos de pago).\n6. IMPORTANTE: Si la respuesta sigue sin estar clara, reformula la query con sinónimos/hipónimos y repite pasos 1–5 solo una vez más.\n7. Si aún no puedes responder, usa el Fallback.\n\nUSO DE main_text\n• Considera main_text como resumen fiable para:\n\n- Confirmar atributos clave (p.ej., “Grosor 4mm”, “Acabado engrasado”, “Tamaño crupón doble”).\n- Descartar falsos positivos si faltan atributos imprescindibles.\n• Si main_text ya contiene TODOS los atributos críticos pedidos por el usuario, puedes confirmar con alta confianza incluso si el score no es el más alto.\n\nDECISION POLICY (CONFIDENCE)\n• Alta confianza (responde afirmando con detalle):\n- score aprox 0.5 y/o main_text contiene titulo y atributos clave; o\n- el slug de la URL coincide claramente con el término principal del usuario.\n• Ambigua (desambiguar en UNA pregunta breve):\n- Top-2 scores muy cercanos y ambos relevantes;\n- Faltan 1–2 atributos clave.\n→ Haz 1 pregunta de aclaración y ofrece 2–3 opciones con enlace.\n• No hay match:\n- Scores muy bajos y/o main_text no contiene atributos clave → Aplica Fallback directamente. sin sugerencias si habla de otro tema.\n\nANSWER STYLE\n• Sin markdown ni símbolos de formato.\n• Enlaces así: Nombre del producto/página: URL\n• Sé conciso y completo. Primero responde la pregunta; luego guía la acción.\n\nTEMPLATES\nA) Producto encontrado (alta confianza)\nSí, tenemos [NOMBRE]. Atributos clave: [resumen, p.ej. “Grosor 4mm, acabado engrasado, tamaño crupón doble”].\nPrecio/stock: “[…price…]” si está disponible.\nVer producto: URL\n¿Quieres que te sugiera alternativas similares en otros grosores/colores?\n\nB) Varias opciones cercanas (ambigua)\nTenemos varias opciones que encajan:\n\n1. Nombre 1: URL — [micro-justificación con 1–2 atributos]\n2. Nombre 2: URL — [micro-justificación]\n¿Buscas un grosor/especificación en concreto (p.ej., 3.5–4 mm, acabado natural/engrasado)?\n\nC) Información de empresa/política\nEn la página [tema], “[…]” (cita breve).\nVer detalles: URL\n\nD) No encontrado pero cercanos (recomendación)\nNo veo exactamente eso, pero estas alternativas son similares:\n\n1. Nombre: URL — [micro-justificación]\nSi necesitas justo [atributo], puedo buscar otra variante.\n\nGUIDANCE / NAVEGACIÓN\n• Siempre que confirmes un producto, ofrece 1 siguiente paso útil: “Añadir al carrito”, “ver otras medidas”, “ver color X”, “contactar”.\n• Si el usuario pide algo fuera de catálogo, sugiere la categoría o el material más cercano y explica la diferencia en una frase. Y si quiere contactar con un humano.\n\nFALLBACK (NO HALLUCINATIONS)\nNo encuentro esa información en nuestra web ahora mismo. Por favor, contacta con un agente humano.\n•  Añade el enlace de contacto (https://artesanofactory.com/contacto/) si no puedes responer.\nContacto: URL\n\nQUALITY GUARDRAILS\n• No inventes stock ni precios si no aparecen.\n• No copies bloques muy largos; cita lo esencial.\n• No repitas el mismo enlace más de una vez salvo que sea necesario.\n• Respeta el límite: máximo 2 list_links y 8 llamadas en total por consulta."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        2528
+      ],
+      "id": "69d94132-a92f-42e9-8e6d-7123e575070f",
+      "name": "expertAgent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI agent for any customer action; like change addresses or names.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=You are a specialized agent responsible for managing user account actions for a customer service team operating via WhatsApp.\n\nAVAILABLE TOOLS\n- getCustomer: Retrieve the current customer information.\n- updateShippingAddress: Update the shipping address.\n- updateBillingAddress: Update the billing address.\n- updateName: Update the first name or last name.\n- updateEmail: Update the login email address.\n\nPOLICIES\n- Always use getCustomer first to retrieve the most up-to-date information before making any updates.\n- If the request cannot be completed using any of the available tools, escalate the issue to a human. *Do not make anything up.*\n\nTOOL‑USE RULES FOR updateShippingAddress,updateBillingAddress\nCuando hagas una actualización de algún dato, si los demas no te pide que los borres rellenalos y dejalos exactamente igual que como estaban con la informaciónd de 'getCustomer'\n\nRESPONSE FORMAT\nProvide a brief summary of the action taken or attempted.\nIndicate whether the action was a success or error.\nIf there is an error or limitation, include a short explanation.\n\nCUSTOMER CONTEXT\ncustomer_id: {{ $json.customer_id }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        2464,
+        2512
+      ],
+      "id": "61fcbe2b-0357-4815-95fd-05ccc538e9e3",
+      "name": "customerAgent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Retrieve the full customer record by ID.",
+        "resource": "customer",
+        "operation": "get",
+        "customerId": "={{ $json.customer_id }}"
+      },
+      "type": "n8n-nodes-base.wooCommerceTool",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        2912
+      ],
+      "id": "c5a75f38-977c-4d72-b2d5-94423c316ba4",
+      "name": "getCustomer1",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "tovkTyfYYyOPZUyy",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Update the customer’s login email address. This will become the new sign‑in credential.",
+        "method": "POST",
+        "url": "=https://artesanofactory.com/wp-json/wc/v3/customers/{{ $json.customer_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `Email to change`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2704,
+        2864
+      ],
+      "id": "81c483d5-1b7b-45af-a61a-9ed562dd5cff",
+      "name": "updateEmail1",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "JAYyebIZHgfqYZ8S",
+          "name": "REST_WooCommerce"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "AI Agent for any orders related actions.",
+        "text": "={{ $('Summarize').item.json.concatenated_message }}",
+        "options": {
+          "systemMessage": "=You are a specialized agent for handling order-related actions for the Customer Success team.\n\nAVAILABLE TOOLS\nverifyCustomerOrder(order_id): Use this first with order ID and customer ID to verify access to a especific order information. If the return response is empty, this user is NOT verified for the information, returns saying that this request is not accessible, want transfer to a human?\n\ngetOrder(order_id): Use to fetch details about a specific order. Always call this before modifying anything.\n\ngetAllCustomerOrders(customer_id): Use only in cases where you must review customer history to complete an action.\n\nget_product(product_id): Use it if you need detailed information about a product\n\nPOLICIES\nALWAYS verify the order with verifyCustomerOrder using both the order ID and customer ID before taking order other action.\n\nAlways retrieve the current order data using getOrder before making any updates.\n\nNever assume anything. If you are unsure or lack enough information, respond that you don't know.\n\n\nINTENTIONS AND EXAMPLES\nInput: \"Can you tell me what's in my order 98765?\"\n\nAction:\n\nUse verifyCustomerOrder with customer ID + order ID.\n\nIf verified, use getOrder to respond with order content.\n\n\nCUSTOMER CONTEXT\ncustomer_id: {{ $json.customer_id }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        3216,
+        2528
+      ],
+      "id": "6c4a5023-8e09-4843-8637-373755ccaebc",
+      "name": "orderAgent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Check if the order id belongs to the customer id",
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "iju_postmeta",
+          "mode": "list",
+          "cachedResultName": "iju_postmeta"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "post_id",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values0_Value', `Order ID`, 'string') }}"
+            },
+            {
+              "column": "meta_key",
+              "value": "_customer_user"
+            },
+            {
+              "column": "meta_value",
+              "value": "={{ $json.customer_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.4,
+      "position": [
+        3104,
+        2720
+      ],
+      "id": "4ce7af9f-41ba-4ac5-a9b3-ac5efe82e29c",
+      "name": "verifyCustomerOrder1",
+      "credentials": {
+        "mySql": {
+          "id": "Nbf80y5pwngWA2tV",
+          "name": "MySQL-WooCommerce-AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "507a0a3d-fbfd-4fe3-a74f-c0b782d604b3",
+              "leftValue": "={{ $json.state }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4560,
+        2208
+      ],
+      "id": "8425af2a-7762-4fc8-be25-6aad9a6077f4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "707018959166122",
+        "recipientPhoneNumber": "34621121850",
+        "textBody": "Cliente quiere escalar",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        4736,
+        2208
+      ],
+      "id": "654bba0e-593f-46c8-835f-896eebd05cd6",
+      "name": "Notify human",
+      "webhookId": "f9ca55d5-b127-4259-80bf-4ef5086e4895",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "8GVktgxsibsrXh5e",
+          "name": "WhatsApp PROD"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "order",
+        "operation": "get",
+        "orderId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_ID', ``, 'string') }}"
+      },
+      "id": "497b5d0c-f45d-40f1-9386-dc1cd022baad",
+      "name": "getOrder",
+      "type": "n8n-nodes-base.wooCommerceTool",
+      "typeVersion": 1,
+      "position": [
+        3472,
+        2768
+      ],
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "tovkTyfYYyOPZUyy",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "order",
+        "operation": "getAll",
+        "options": {
+          "customer": "={{ $json.customer_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerceTool",
+      "typeVersion": 1,
+      "position": [
+        3264,
+        2832
+      ],
+      "id": "cfa4c115-6edb-495a-9174-17255dbec958",
+      "name": "getAllCustomerOrders",
+      "alwaysOutputData": false,
+      "notesInFlow": false,
+      "retryOnFail": false,
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "tovkTyfYYyOPZUyy",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Update the customer’s shipping address.Set existing values for the rest without modifications.",
+        "resource": "customer",
+        "operation": "update",
+        "customerId": "={{ $json.customer_id }}",
+        "updateFields": {
+          "shipping": {
+            "first_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('First_Name', ``, 'string') }}",
+            "last_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Last_Name', ``, 'string') }}",
+            "company": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Company', ``, 'string') }}",
+            "address_1": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Address_1', ``, 'string') }}",
+            "address_2": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Address_2', ``, 'string') }}",
+            "city": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('City', ``, 'string') }}",
+            "state": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('State', ``, 'string') }}",
+            "postcode": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Postcode', ``, 'string') }}",
+            "country": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Country', ``, 'string') }}",
+            "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Email', ``, 'string') }}",
+            "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Phone', ``, 'string') }}"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerceTool",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        2704
+      ],
+      "id": "583b284d-9b0a-4031-a674-6a8ec7817712",
+      "name": "updateShippingAddress",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "tovkTyfYYyOPZUyy",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Update a customer First Name or Last Name in WooCommerce. Set existing values for the rest without modifications",
+        "resource": "customer",
+        "operation": "update",
+        "customerId": "={{ $json.customer_id }}",
+        "updateFields": {
+          "first_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('First_Name', ``, 'string') }}",
+          "last_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Last_Name', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerceTool",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        2720
+      ],
+      "id": "c90ea150-bdbb-45bc-bf81-8eec111d2a6f",
+      "name": "updateName",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "tovkTyfYYyOPZUyy",
+          "name": "WooCommerce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Update the customer’s billing address.Set existing values for the rest without modifications.",
+        "resource": "customer",
+        "operation": "update",
+        "customerId": "={{ $json.customer_id }}",
+        "updateFields": {
+          "billing": {
+            "first_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('First_Name', ``, 'string') }}",
+            "last_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Last_Name', ``, 'string') }}",
+            "company": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Company', ``, 'string') }}",
+            "address_1": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Address_1', ``, 'string') }}",
+            "address_2": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Address_2', ``, 'string') }}",
+            "city": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('City', ``, 'string') }}",
+            "state": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('State', ``, 'string') }}",
+            "postcode": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Postcode', ``, 'string') }}",
+            "country": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Country', ``, 'string') }}",
+            "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Email', ``, 'string') }}",
+            "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Phone', ``, 'string') }}"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.wooCommerceTool",
+      "typeVersion": 1,
+      "position": [
+        2368,
+        2688
+      ],
+      "id": "c3f8577e-bd12-4338-976d-bfa0fd3bee03",
+      "name": "updateBillingAddress",
+      "credentials": {
+        "wooCommerceApi": {
+          "id": "tovkTyfYYyOPZUyy",
+          "name": "WooCommerce account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Get a customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a customer": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "History Memory": {
+      "ai_memory": [
+        []
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Map image prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map image prompt": {
+      "main": [
+        [
+          {
+            "node": "Merge text",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Map text prompt": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gets WhatsApp Voicemail Source URL": {
+      "main": [
+        [
+          {
+            "node": "Download Voicemail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gets WhatsApp Image Source URL": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Voicemail": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Types": {
+      "main": [
+        [
+          {
+            "node": "Map text prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gets WhatsApp Voicemail Source URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gets WhatsApp Image Source URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Supported",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Merge text",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge text": {
+      "main": [
+        [
+          {
+            "node": "Insert message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route Types",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert message": {
+      "main": [
+        [
+          {
+            "node": "Wait10sec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait10sec": {
+      "main": [
+        [
+          {
+            "node": "All messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All messages": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete table or rows": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Delete table or rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing3": {
+      "main": [
+        []
+      ]
+    },
+    "No Operation, do nothing4": {
+      "main": [
+        [
+          {
+            "node": "Merge text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Switch3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generic Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch3": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalated to human",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalated to human",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "insert log3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalated to human": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generic Error": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT 5-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "expertAgent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "customerAgent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "orderAgent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zep": {
+      "ai_memory": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_product": {
+      "ai_tool": [
+        [
+          {
+            "node": "expertAgent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "orderAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_page1": {
+      "ai_tool": [
+        [
+          {
+            "node": "expertAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_links1": {
+      "ai_tool": [
+        [
+          {
+            "node": "expertAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "expertAgent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "customerAgent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "updateEmail1": {
+      "ai_tool": [
+        [
+          {
+            "node": "customerAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getCustomer1": {
+      "ai_tool": [
+        [
+          {
+            "node": "customerAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "orderAgent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verifyCustomerOrder1": {
+      "ai_tool": [
+        [
+          {
+            "node": "orderAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insert log3": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Notify human",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "getOrder": {
+      "ai_tool": [
+        [
+          {
+            "node": "orderAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getAllCustomerOrders": {
+      "ai_tool": [
+        [
+          {
+            "node": "orderAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "updateShippingAddress": {
+      "ai_tool": [
+        [
+          {
+            "node": "customerAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "updateName": {
+      "ai_tool": [
+        [
+          {
+            "node": "customerAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "updateBillingAddress": {
+      "ai_tool": [
+        [
+          {
+            "node": "customerAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "3fa4c85d-ee1a-49a0-bb15-6c8aac4ab0eb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "98c3887f53f15c05483a29ce5703dc905729dc53c469372963d5b701adbcf10a"
+  },
+  "id": "jpPZi86WBWOqpxGE",
+  "tags": []
+}
